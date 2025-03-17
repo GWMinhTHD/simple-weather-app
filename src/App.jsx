@@ -11,14 +11,14 @@ import LoadingSpinner from "./components/LoadingSpinner";
 import ErrorMessage from "./components/ErrorMessage";
 
 function App() {
-  const [city, setCity] = useState("");
+  const [location, setLocation] = useState(null);
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [tempUnit, setTempUnit] = useState("celsius"); // 'celsius' or 'fahrenheit'
+  const [tempUnit, setTempUnit] = useState("celsius");
 
-  const handleCityChange = (selectedCity) => {
-    setCity(selectedCity);
+  const handleLocationSelect = (selectedLocation) => {
+    setLocation(selectedLocation);
   };
 
   const toggleTempUnit = () => {
@@ -27,7 +27,7 @@ function App() {
 
   useEffect(() => {
     const fetchWeatherData = async () => {
-      if (!city) return;
+      if (!location) return;
 
       try {
         setLoading(true);
@@ -38,7 +38,7 @@ function App() {
           {
             params: {
               key: import.meta.env.VITE_WEATHER_API_KEY,
-              q: city,
+              q: location.coordinates,
               aqi: "no",
             },
           }
@@ -55,7 +55,7 @@ function App() {
     };
 
     fetchWeatherData();
-  }, [city]);
+  }, [location]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-blue-300 flex flex-col items-center justify-center p-4">
@@ -64,7 +64,7 @@ function App() {
           Weather App
         </h1>
 
-        <SearchBar onCityChange={handleCityChange} />
+        <SearchBar onLocationSelect={handleLocationSelect} />
 
         {loading && <LoadingSpinner />}
 
