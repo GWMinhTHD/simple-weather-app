@@ -13,7 +13,7 @@ function App() {
 
   const {
     data: weather,
-    isPending,
+    isFetching,
     error,
   } = useQuery({
     queryKey: ["weather", location?.coordinates],
@@ -56,7 +56,8 @@ function App() {
 
         <SearchBar onLocationSelect={handleLocationSelect} />
 
-        {isPending && <LoadingSpinner />}
+        {isFetching && <LoadingSpinner />}
+
 
         {error && (
           <ErrorMessage message="Failed to fetch weather data. Please try again." />
