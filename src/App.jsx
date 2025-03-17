@@ -1,10 +1,7 @@
-"use client";
-
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
 import "./App.css";
-
-// Import components
 import SearchBar from "./components/SearchBar";
 import WeatherDisplay from "./components/WeatherDisplay";
 import LoadingSpinner from "./components/LoadingSpinner";
@@ -12,10 +9,35 @@ import ErrorMessage from "./components/ErrorMessage";
 
 function App() {
   const [location, setLocation] = useState(null);
-  const [weather, setWeather] = useState(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [tempUnit, setTempUnit] = useState("celsius");
+
+  const {
+    data: weather,
+    isPending,
+    error,
+  } = useQuery({
+    queryKey: ["weather", location?.coordinates],
+    queryFn: async () => {
+      if (!location?.coordinates) {
+        return null;
+      }
+
+      const response = await axios.get(
+        `https://api.weatherapi.com/v1/current.json`,
+        {
+          params: {
+            key: import.meta.env.VITE_WEATHER_API_KEY,
+            q: location.coordinates,
+            aqi: "no",
+          },
+        }
+      );
+
+      return response.data;
+    },
+    enabled: !!location?.coordinates,
+    staleTime: 1000 * 60 * 10,
+  });
 
   const handleLocationSelect = (selectedLocation) => {
     setLocation(selectedLocation);
@@ -24,38 +46,6 @@ function App() {
   const toggleTempUnit = () => {
     setTempUnit(tempUnit === "celsius" ? "fahrenheit" : "celsius");
   };
-
-  useEffect(() => {
-    const fetchWeatherData = async () => {
-      if (!location) return;
-
-      try {
-        setLoading(true);
-        setError("");
-
-        const response = await axios.get(
-          `https://api.weatherapi.com/v1/current.json`,
-          {
-            params: {
-              key: import.meta.env.VITE_WEATHER_API_KEY,
-              q: location.coordinates,
-              aqi: "no",
-            },
-          }
-        );
-
-        setWeather(response.data);
-      } catch (err) {
-        console.error("Error fetching weather data:", err);
-        setError("Failed to fetch weather data. Please try again.");
-        setWeather(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchWeatherData();
-  }, [location]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-100 to-blue-300 flex flex-col items-center justify-center p-4">
@@ -66,9 +56,11 @@ function App() {
 
         <SearchBar onLocationSelect={handleLocationSelect} />
 
-        {loading && <LoadingSpinner />}
+        {isPending && <LoadingSpinner />}
 
-        <ErrorMessage message={error} />
+        {error && (
+          <ErrorMessage message="Failed to fetch weather data. Please try again." />
+        )}
 
         {weather && (
           <WeatherDisplay
